@@ -13,7 +13,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 app.use(express.json());
 
 // Serve static files
-app.use(express.static('public'));
+app.use(express.static(__dirname));
 
 // Root route
 app.get('/', (req, res) => {
