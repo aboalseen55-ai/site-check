@@ -30,6 +30,19 @@ app.get('/', (req, res) => {
   }
 });
 
+// Serve hacked.html
+app.get('/hacked.html', (req, res) => {
+  try {
+    const filePath = path.join(process.cwd(), 'hacked.html');
+    const html = fs.readFileSync(filePath, 'utf8');
+    res.set('Content-Type', 'text/html');
+    res.send(html);
+  } catch (error) {
+    console.error('Error reading hacked.html:', error);
+    res.status(404).send('Page not found');
+  }
+});
+
 // Serve CSS
 app.get('/style.css', (req, res) => {
   try {
