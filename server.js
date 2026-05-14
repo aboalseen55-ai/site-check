@@ -7,7 +7,11 @@ const PORT = process.env.PORT || 3000;
 // Supabase setup
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+let supabase = null;
+
+if (supabaseUrl && supabaseKey) {
+  supabase = createClient(supabaseUrl, supabaseKey);
+}
 
 // Middleware to parse JSON
 app.use(express.json());
@@ -24,7 +28,10 @@ app.use(express.static(__dirname, {
 // Root route
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
-});
+})if (!supabase) {
+    return res.status(500).json({ success: false, message: 'Database not configured' });
+  }
+  ;
 
 // Route to save credentials
 app.post('/save', async (req, res) => {
