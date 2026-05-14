@@ -8,6 +8,11 @@
   ],
   "routes": [
     {
+      "src": "/save",
+      "dest": "server.js",
+      "methods": ["POST"]
+    },
+    {
       "src": "/(.*)",
       "dest": "server.js"
     }

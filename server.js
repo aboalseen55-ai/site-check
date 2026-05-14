@@ -12,8 +12,13 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 // Middleware to parse JSON
 app.use(express.json());
 
-// Serve static files from the current directory
-app.use(express.static('.'));
+// Serve static files
+app.use(express.static('public'));
+
+// Root route
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/index.html');
+});
 
 // Route to save credentials
 app.post('/save', async (req, res) => {
@@ -49,6 +54,12 @@ app.post('/save', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-});
+// Export for Vercel
+module.exports = app;
+
+// For local development
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
+  });
+}
