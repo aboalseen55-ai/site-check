@@ -12,8 +12,14 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 // Middleware to parse JSON
 app.use(express.json());
 
-// Serve static files
-app.use(express.static(__dirname));
+// Serve static files with proper MIME types
+app.use(express.static(__dirname, {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    }
+  }
+}));
 
 // Root route
 app.get('/', (req, res) => {
