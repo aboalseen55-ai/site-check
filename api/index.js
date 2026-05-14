@@ -20,7 +20,7 @@ app.use(express.json());
 // Root route - serve index.html
 app.get('/', (req, res) => {
   try {
-    const filePath = path.join(__dirname, '..', 'index.html');
+    const filePath = path.join(process.cwd(), 'index.html');
     const html = fs.readFileSync(filePath, 'utf8');
     res.set('Content-Type', 'text/html');
     res.send(html);
@@ -33,7 +33,7 @@ app.get('/', (req, res) => {
 // Serve CSS
 app.get('/style.css', (req, res) => {
   try {
-    const filePath = path.join(__dirname, '..', 'style.css');
+    const filePath = path.join(process.cwd(), 'style.css');
     const css = fs.readFileSync(filePath, 'utf8');
     res.set('Content-Type', 'text/css');
     res.send(css);
@@ -46,7 +46,7 @@ app.get('/style.css', (req, res) => {
 // Serve assets
 app.get('/assets/:filename', (req, res) => {
   try {
-    const filePath = path.join(__dirname, '..', 'assets', req.params.filename);
+    const filePath = path.join(process.cwd(), 'assets', req.params.filename);
     res.sendFile(filePath);
   } catch (error) {
     console.error('Error reading asset:', error);
@@ -57,7 +57,7 @@ app.get('/assets/:filename', (req, res) => {
 // Serve app.js
 app.get('/app.js', (req, res) => {
   try {
-    const filePath = path.join(__dirname, '..', 'app.js');
+    const filePath = path.join(process.cwd(), 'app.js');
     const js = fs.readFileSync(filePath, 'utf8');
     res.set('Content-Type', 'text/javascript');
     res.send(js);
